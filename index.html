@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Weather App</title>
+    <link rel="stylesheet" type="text/css" href="styles.css" media="screen" />
+</head>
+
+<body>
+    <h1> Weather App</h1>
+      
+      </div>  
+    <div id="input_container">
+        <input name="city" value="" id="city" placeholder="Enter your City"/>
+        <button id="search" onclick="findWeather();">Search</button>
+    </div>
+    <div id="response_container"></div>
+
+    <script type="text/javascript">
+        function findWeather() {
+            const cityInput = document.getElementById('city');
+            const searchTerm = cityInput.value;
+            if (!searchTerm || !searchTerm.length) {
+                alert('Please provide a city');
+                return;
+            }
+
+            const APP_ID = "fbf712a5a83d7305c3cda4ca8fe7ef29";
+            const API_URL =
+                `https://api.openweathermap.org/data/2.5/forecast?q=${searchTerm}&units=metric&appid=${APP_ID}`
+
+            const xhr = new XMLHttpRequest();
+
+            xhr.open('POST', API_URL, true);
+
+            xhr.onload = (e) => {
+                const d = parseWeatherResponse(JSON.parse(xhr.response));
+                displayWeatherInfo(d);
+            }
+
+            xhr.send(null);
+        }
+
+        function parseWeatherResponse(response) {
+            if (!response || !response.list) return;
+
+            const groups = response.list.reduce((groups, weather) => {
+                const date = weather.dt_txt.split(' ')[0];
+                if (!groups[date]) {
+                    groups[date] = [];
+                }
+                groups[date].push(weather);
+                return groups;
+            }, {});
+
+            const groupArrays = Object.keys(groups).map((date) => {
+                return {
+                    date,
+                    children: groups[date]
+                };
+            });
+
+            return groupArrays;
+        }
+
+        function displayWeatherInfo(data) {
+            let response = '';
+            data.forEach(d => {
+                response += `<strong>${d.date}</strong>`;
+
+                if (d.children && d.children.length) {
+                    response += '<ul>';
+                    d.children.forEach(c => {
+                        response += `
+                        <li>
+                        ${c.dt_txt} - ${c.main.temp} - ${c.weather[0].main}
+                        </li>
+                        `
+                    });
+                    response += '</ul>';
+                }
+
+                response += '<br /><br />';
+            });
+
+            document.getElementById('response_container').innerHTML = response;
+        }
+    </script>
+</body>
+
+</html>
